@@ -104,7 +104,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
 
             EditorGUI.BeginChangeCheck();
             _searchQuery = _searchField.OnToolbarGUI(new Rect(1, 1, windowSize.x - 3, 24), _searchQuery); // _treeView.searchString is not working correctly
-            _treeView.OnGUI(new Rect(1, 26, windowSize.x - 3, windowSize.y - 30));
+            _treeView.OnGUI(new Rect(1, 20, windowSize.x - 3, windowSize.y - 30));
 
             if (EditorGUI.EndChangeCheck())
                 _treeView.Reload();

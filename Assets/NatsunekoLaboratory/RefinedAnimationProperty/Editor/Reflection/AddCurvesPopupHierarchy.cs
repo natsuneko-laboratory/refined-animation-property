@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*-------------------------------------------------------------------------------------------
+ * Copyright (c) Natsuneko. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *------------------------------------------------------------------------------------------*/
+
+using System;
 using System.Reflection;
 
 using NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions;
@@ -16,7 +21,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection
             get
             {
                 var obj = InvokeField<object>("m_TreeViewDataSource", BindingFlags.NonPublic | BindingFlags.Instance);
-                return new AddCurvesPopupHierarchyDataSource(obj);
+                return obj != null ? new AddCurvesPopupHierarchyDataSource(obj) : null;
             }
         }
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  *------------------------------------------------------------------------------------------*/
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -22,24 +23,35 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
 {
     public class RefinedAnimationProperty
     {
+        private const float C1 = 1.70158f;
+        private const float C2 = C1 * 1.525f;
+        private const float C3 = C1 + 1f;
+        private const float C4 = 2 * Mathf.PI / 3f;
+        private const float C5 = 2 * Mathf.PI / 4.5f;
+        private const float N1 = 7.5625f;
+        private const float D1 = 2.75f;
+        private const float Epsilon = 0.0001f;
         private static SearchField _search;
         private static AnimationPropertyTreeView _treeView;
         private static TreeViewState _treeViewState;
         private static SearchField _searchField;
         private static string _searchQuery;
+        private static bool _isRebuildNeeded;
         private static GameObject _previousActiveRootGameObject;
         private static ScriptableObject _previousActiveRootScriptableObject;
+
 
         [InitializeOnLoadMethod]
         public static void InitializeOnLoad()
         {
-            InjectToAddCurvePopUpOnGUI();
-        }
-
-        private static void InjectToAddCurvePopUpOnGUI()
-        {
             var harmony = new Harmony("refined-animation-property");
 
+            InjectToAddCurvePopUpOnGUI(harmony);
+            InjectToCurveMenuManager(harmony);
+        }
+
+        private static void InjectToAddCurvePopUpOnGUI(Harmony harmony)
+        {
             var t1 = typeof(AssetStore).Assembly.GetType("UnityEditorInternal.AddCurvesPopup");
             var mOriginal1 = AccessTools.Method(t1, "OnGUI");
             var mPrefix1 = typeof(RefinedAnimationProperty).GetMethod(nameof(ReplacedOnGUI), BindingFlags.NonPublic | BindingFlags.Static);
@@ -50,21 +62,29 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
             var mOriginal2 = AccessTools.Method(t2, "RemoveCurvesFromNodes");
             var mPostfix2 = typeof(RefinedAnimationProperty).GetMethod(nameof(OnHandleRemoveCurvesFromNodes), BindingFlags.NonPublic | BindingFlags.Static);
 
-            Debug.LogWarning(mOriginal2);
-
             harmony.Patch(mOriginal2, null, new HarmonyMethod(mPostfix2));
         }
 
+
+        private static void InjectToCurveMenuManager(Harmony harmony)
+        {
+            var t1 = typeof(AssetStore).Assembly.GetType("UnityEditor.CurveMenuManager");
+            var mOrigin1 = AccessTools.Method(t1, "AddTangentMenuItems");
+            var mPostfix1 = typeof(RefinedAnimationProperty).GetMethod(nameof(OnHandleAddTangentMenuItems), BindingFlags.NonPublic | BindingFlags.Static);
+
+            harmony.Patch(mOrigin1, null, new HarmonyMethod(mPostfix1));
+        }
+
+        #region InjectToAddCurvePopUpOnGUI
 
         #region UnityEditorInternal.AnimationWindowHierarchyGUI
 
         private static void OnHandleRemoveCurvesFromNodes()
         {
-            _treeView.BuildItemsTree();
+            _isRebuildNeeded = true;
         }
 
         #endregion
-
 
         #region UnityEditorInternal.AddCurvesPopup
 
@@ -106,11 +126,18 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
 
         private static void ReBuildIfNeeded()
         {
+            if (_isRebuildNeeded)
+            {
+                _isRebuildNeeded = false;
+                _treeView.BuildItemsTree();
+            }
+
             if (_previousActiveRootGameObject == AddCurvesPopup.State.ActiveRootGameObject && _previousActiveRootScriptableObject == AddCurvesPopup.State.ActiveScriptableObject)
                 return;
 
             _previousActiveRootGameObject = AddCurvesPopup.State.ActiveRootGameObject;
             _previousActiveRootScriptableObject = AddCurvesPopup.State.ActiveScriptableObject;
+            _isRebuildNeeded = false;
 
             _treeView.BuildItemsTree();
         }
@@ -176,6 +203,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                         if (element.hasChildren)
                         {
                             if (IsExpanded(item.id))
+                            {
                                 AddItemsRecursive(element, item, rows, _searchQuery);
                             }
                             else
@@ -319,7 +347,9 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                     if (childElement.hasChildren)
                     {
                         if (IsExpanded(childItem.id))
+                        {
                             AddItemsRecursive(childElement, childItem, rows, searchQuery);
+                        }
                         else
                         {
                             var list = new List<TreeViewItem>();
@@ -334,7 +364,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
 
                     if (childItem.children != null && childItem.children.Count > 0)
                     {
-                        if (childItem.children.Count > 1 || childItem.children[0] != null) 
+                        if (childItem.children.Count > 1 || childItem.children[0] != null)
                             childItem.children = childItem.children.Where(w => (w as ReflectedTreeViewItem.SearchableTreeViewItem)?.MarkAsHit == true).ToList();
 
                         childItem.MarkAsHit = childItem.children.Count > 0;

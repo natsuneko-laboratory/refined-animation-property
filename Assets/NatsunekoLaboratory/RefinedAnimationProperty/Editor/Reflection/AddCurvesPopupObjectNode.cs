@@ -1,6 +1,9 @@
-﻿using System;
+﻿/*-------------------------------------------------------------------------------------------
+ * Copyright (c) Natsuneko. All rights reserved.
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ *------------------------------------------------------------------------------------------*/
 
-using UnityEditor.IMGUI.Controls;
+using System;
 
 using UnityEditorInternal;
 

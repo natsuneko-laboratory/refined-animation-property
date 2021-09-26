@@ -876,6 +876,8 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                     curve.RemoveKey(lastKeyIndex);
                     curve.RemoveKey(firstKeyIndex);
 
+                    var keys = new List<int>();
+
                     for (var i = 0; i <= resolution; i++)
                     {
                         var t = firstKey.time + delta * i;
@@ -886,7 +888,12 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                         AnimationUtility.SetKeyBroken(curve, j, true);
                         AnimationUtility.SetKeyLeftTangentMode(curve, i, AnimationUtility.TangentMode.Free);
                         AnimationUtility.SetKeyRightTangentMode(curve, i, AnimationUtility.TangentMode.Free);
+
+                        keys.Add(j);
                     }
+
+                    foreach (var j in keys)
+                        curve.SmoothTangents(j, 0f);
 
                     AnimationUtilityRefl.UpdateTangentsFromMode(curve);
 

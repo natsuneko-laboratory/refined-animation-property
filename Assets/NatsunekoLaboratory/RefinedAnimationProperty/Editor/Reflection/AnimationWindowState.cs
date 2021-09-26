@@ -20,17 +20,6 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection
 
         public AnimationWindowState(object instance) : base(instance, T) { }
 
-        public AnimationWindowSelectionItem Selection
-        {
-            get
-            {
-                var obj = InvokeProperty<object>("selection", BindingFlags.Public | BindingFlags.Instance);
-                return new AnimationWindowSelectionItem(obj);
-            }
-        }
-
-        public AnimationClip ActiveAnimationClip => InvokeProperty<AnimationClip>("activeAnimationClip", BindingFlags.Public | BindingFlags.Instance);
-
         public GameObject ActiveRootGameObject => InvokeProperty<GameObject>("activeRootGameObject", BindingFlags.Public | BindingFlags.Instance);
 
         public ScriptableObject ActiveScriptableObject => InvokeProperty<ScriptableObject>("activeScriptableObject", BindingFlags.Public | BindingFlags.Instance);

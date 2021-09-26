@@ -10,16 +10,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection
     internal class AddCurvesPopupHierarchy : ReflectionClass
     {
         private static readonly Type T;
-
-        public TreeViewController TreeView
-        {
-            get
-            {
-                var obj = InvokeField<object>("m_TreeView", BindingFlags.NonPublic | BindingFlags.Instance);
-                return new TreeViewController(obj);
-            }
-        }
-
+        
         public AddCurvesPopupHierarchyDataSource TreeViewDataSource
         {
             get

@@ -10,6 +10,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
+using UnityEngine;
+
 using Object = UnityEngine.Object;
 
 namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
@@ -71,7 +73,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
                 cache.Invoke(_instance, parameters);
                 return;
             }
-
+            
             var mi = _instance.GetType().GetMethod(name, flags | BindingFlags.Instance);
             if (mi == null)
                 throw new InvalidOperationException($"Method {name} is not found in this instance");
@@ -80,9 +82,28 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             methods[name].Invoke(_instance, parameters);
         }
 
+        protected void InvokeMethodStrict(string name, BindingFlags flags, params StrictParameter[] parameters)
+        {
+            var methods = ((Cache)Caches[_type]).VoidMethods;
+            methods.TryGetValue(name, out var cache);
+
+            if (cache != null)
+            {
+                cache.Invoke(_instance, parameters.Select(w => w.Value).ToArray());
+                return;
+            }
+
+            var mi = _instance.GetType().GetMethod(name, flags | BindingFlags.Instance, null, parameters.Select(w => w.Type).ToArray(), null);
+            if (mi == null)
+                throw new InvalidOperationException($"Method {name} is not found in this instance");
+
+            methods.Add(name, CreateVoidMethodAccessor(mi));
+            methods[name].Invoke(_instance, parameters.Select(w => w.Value).ToArray());
+        }
+
         protected TResult InvokeField<TResult>(string name, BindingFlags flags)
         {
-            var members = ((Cache)Caches[_type]).Members;
+            var members = ((Cache)Caches[_type]).MemberGetters;
             members.TryGetValue(name, out var cache);
 
             if (cache != null)
@@ -92,13 +113,32 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             if (fi == null)
                 throw new InvalidOperationException($"Field {name} is not found in this instance");
 
-            members.Add(name, CreateFieldAccessor(fi));
+            members.Add(name, CreateFieldGetAccessor(fi));
             return (TResult)members[name].Invoke(_instance);
+        }
+
+        protected void InvokeField<TValue>(string name, BindingFlags flags, TValue value)
+        {
+            var members = ((Cache)Caches[_type]).MemberSetters;
+            members.TryGetValue(name, out var cache);
+
+            if (cache != null)
+            {
+                cache.Invoke(_instance, value);
+                return;
+            }
+
+            var fi = _instance.GetType().GetField(name, flags | BindingFlags.Instance);
+            if (fi == null)
+                throw new InvalidOperationException($"Field {name} is not found in this instance");
+
+            members.Add(name, CreateFieldSetAccessor<TValue>(fi));
+            members[name].Invoke(_instance, value);
         }
 
         protected TResult InvokeProperty<TResult>(string name, BindingFlags flags)
         {
-            var members = ((Cache)Caches[_type]).Members;
+            var members = ((Cache)Caches[_type]).MemberGetters;
             members.TryGetValue(name, out var cache);
 
             if (cache != null)
@@ -134,12 +174,21 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             return Expression.Lambda<Action<object, object[]>>(Expression.Convert(body, typeof(void)), instance, args).Compile();
         }
 
-        private Func<object, object> CreateFieldAccessor(FieldInfo fi)
+        private Func<object, object> CreateFieldGetAccessor(FieldInfo fi)
         {
             var instance = Expression.Parameter(typeof(object), "instance");
             var body = Expression.Field(Expression.Convert(instance, _type), fi);
 
             return Expression.Lambda<Func<object, object>>(Expression.Convert(body, typeof(object)), instance).Compile();
+        }
+
+        private Action<object, object> CreateFieldSetAccessor<TValue>(FieldInfo fi)
+        {
+            var instance = Expression.Parameter(typeof(object), "instance");
+            var value = Expression.Parameter(typeof(object), "value");
+            var body = Expression.Assign(Expression.Field(Expression.Convert(instance, _type), fi), Expression.Convert(value, typeof(TValue)));
+
+            return Expression.Lambda<Action<object, object>>(Expression.Convert(body, typeof(object)), instance, value).Compile();
         }
 
         private Func<object, object> CreatePropertyAccessor(PropertyInfo pi)
@@ -152,9 +201,17 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
 
         private class Cache
         {
-            public readonly Dictionary<string, Func<object, object>> Members = new Dictionary<string, Func<object, object>>();
+            public readonly Dictionary<string, Func<object, object>> MemberGetters = new Dictionary<string, Func<object, object>>();
+            public readonly Dictionary<string, Action<object, object>> MemberSetters = new Dictionary<string, Action<object, object>>();
             public readonly Dictionary<string, Func<object, object[], object>> Methods = new Dictionary<string, Func<object, object[], object>>();
             public readonly Dictionary<string, Action<object, object[]>> VoidMethods = new Dictionary<string, Action<object, object[]>>();
+        }
+
+        protected class StrictParameter
+        {
+            public object Value { get; set; }
+
+            public Type Type { get; set; }
         }
     }
 }

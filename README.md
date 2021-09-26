@@ -15,6 +15,10 @@ Once installed, this extension will rewrite the behaviour around the Animation P
 This extension used Harmony library, which may cause DLL conflicts with VRCSDK3 WORLD or UdonSharp.
 In this case, please remove the included Harmony.dll and replace the reference in the Assembly Definition Files with that of VRCSDK3 WORLD or UdonSharp.
 
+## Download
+
+You can download UnityPackage from [BOOTH](https://natsuneko.booth.pm/items/3307910).
+
 ## License
 
 MIT by [@6jz](https://twitter.con/6jz)

@@ -880,7 +880,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                     for (var i = 0; i <= resolution; i++)
                     {
                         var t = firstKey.time + delta * i;
-                        var v = easing.Invoke(i / (float)resolution) * (firstKey.value > lastKey.value ? -1 : 1);
+                        var v = easing.Invoke(i / (float)resolution);
                         var d = (lastKey.value - firstKey.value) * v + firstKey.value;
 
                         var j = curve.AddKey(t, d);

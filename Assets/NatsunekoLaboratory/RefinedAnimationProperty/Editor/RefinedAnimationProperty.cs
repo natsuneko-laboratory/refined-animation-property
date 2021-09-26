@@ -545,14 +545,13 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
 
         private static bool TrySeparateKeyFrameTimesToResolution(float first, float last, int resolution, out float delta)
         {
-            if (last - first / (1 / 60f) < resolution)
+            if ((last - first) / (1 / 60f) < resolution)
             {
                 delta = 0.0f;
                 return false;
             }
 
-            var val = last - first / (1 / 60f);
-            delta = val / resolution;
+            delta = (last - first) / resolution;
             return true;
         }
 

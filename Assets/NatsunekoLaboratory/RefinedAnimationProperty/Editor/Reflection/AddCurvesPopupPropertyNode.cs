@@ -17,6 +17,8 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection
     {
         private static readonly Type T;
 
+        public static Type ReflectedT => T;
+
         public EditorCurveBinding[] CurveBindings => InvokeField<EditorCurveBinding[]>("curveBindings", BindingFlags.Public | BindingFlags.Instance);
 
         static AddCurvesPopupPropertyNode()

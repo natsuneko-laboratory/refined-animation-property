@@ -302,13 +302,16 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
                 var ids = _treeView.GetSelection();
                 foreach (var id in ids)
                 {
-                    var node = _treeView.FindItem(id, rootItem);
-                    if (node is AddCurvesPopupPropertyNode.AddCurvesPopupPropertyNodeInternal a)
-                        AddCurvesPopup.AddNewCurve(a.Original);
+                    var node = _item.children.FirstOrDefault(w => w.id == id);
+                    if (node == null)
+                        continue;
+
+                    if (node.GetType() == AddCurvesPopupPropertyNode.ReflectedT)
+                        AddCurvesPopup.AddNewCurve(node);
                     else if (node.hasChildren)
                         foreach (var item in node.children)
-                            if (item is AddCurvesPopupPropertyNode.AddCurvesPopupPropertyNodeInternal b)
-                                AddCurvesPopup.AddNewCurve(b.Original);
+                            if (item.GetType() == AddCurvesPopupPropertyNode.ReflectedT)
+                                AddCurvesPopup.AddNewCurve(item);
                 }
 
                 BuildItemsTree();

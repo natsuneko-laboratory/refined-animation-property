@@ -10,8 +10,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-using UnityEngine;
-
 using Object = UnityEngine.Object;
 
 namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
@@ -19,20 +17,27 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
     public class ReflectionClass
     {
         private static readonly Hashtable Caches = new Hashtable();
-        private readonly object _instance;
         private readonly Type _type;
 
-        protected Object RawUnityInstance => _instance as Object;
+        protected Object RawUnityInstance => RawInstance as Object;
 
-        protected object RawInstance => _instance;
+        protected object RawInstance { get; }
 
-        protected ReflectionClass(object instance, Type type)
+        protected ReflectionClass(object instance, Type type, bool isStrict = false)
         {
-            _instance = instance;
+            RawInstance = instance;
             _type = type;
 
             if (Caches[_type] == null)
                 Caches[_type] = new Cache();
+
+            if (isStrict)
+            {
+                if (IsValid())
+                    return;
+
+                throw new InvalidOperationException();
+            }
         }
 
         public bool IsAlive()
@@ -42,9 +47,9 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
 
         public bool IsValid()
         {
-            if (_instance is Object)
+            if (RawInstance is Object)
                 return IsAlive() && RawUnityInstance.GetType() == _type;
-            return _instance.GetType() == _type;
+            return RawInstance.GetType() == _type;
         }
 
         protected TResult InvokeMethod<TResult>(string name, BindingFlags flags, params object[] parameters)
@@ -53,14 +58,14 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             methods.TryGetValue(name, out var cache);
 
             if (cache != null)
-                return (TResult)cache.Invoke(_instance, parameters);
+                return (TResult)cache.Invoke(RawInstance, parameters);
 
-            var mi = _instance.GetType().GetMethod(name, flags | BindingFlags.Instance);
+            var mi = RawInstance.GetType().GetMethod(name, flags | BindingFlags.Instance);
             if (mi == null)
                 throw new InvalidOperationException($"Method {name} is not found in this instance");
 
             methods.Add(name, CreateMethodAccessor(mi));
-            return (TResult)methods[name].Invoke(_instance, parameters);
+            return (TResult)methods[name].Invoke(RawInstance, parameters);
         }
 
         protected void InvokeMethod(string name, BindingFlags flags, params object[] parameters)
@@ -70,16 +75,16 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
 
             if (cache != null)
             {
-                cache.Invoke(_instance, parameters);
+                cache.Invoke(RawInstance, parameters);
                 return;
             }
-            
-            var mi = _instance.GetType().GetMethod(name, flags | BindingFlags.Instance);
+
+            var mi = RawInstance.GetType().GetMethod(name, flags | BindingFlags.Instance);
             if (mi == null)
                 throw new InvalidOperationException($"Method {name} is not found in this instance");
 
             methods.Add(name, CreateVoidMethodAccessor(mi));
-            methods[name].Invoke(_instance, parameters);
+            methods[name].Invoke(RawInstance, parameters);
         }
 
         protected void InvokeMethodStrict(string name, BindingFlags flags, params StrictParameter[] parameters)
@@ -89,16 +94,16 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
 
             if (cache != null)
             {
-                cache.Invoke(_instance, parameters.Select(w => w.Value).ToArray());
+                cache.Invoke(RawInstance, parameters.Select(w => w.Value).ToArray());
                 return;
             }
 
-            var mi = _instance.GetType().GetMethod(name, flags | BindingFlags.Instance, null, parameters.Select(w => w.Type).ToArray(), null);
+            var mi = RawInstance.GetType().GetMethod(name, flags | BindingFlags.Instance, null, parameters.Select(w => w.Type).ToArray(), null);
             if (mi == null)
                 throw new InvalidOperationException($"Method {name} is not found in this instance");
 
             methods.Add(name, CreateVoidMethodAccessor(mi));
-            methods[name].Invoke(_instance, parameters.Select(w => w.Value).ToArray());
+            methods[name].Invoke(RawInstance, parameters.Select(w => w.Value).ToArray());
         }
 
         protected TResult InvokeField<TResult>(string name, BindingFlags flags)
@@ -107,14 +112,14 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             members.TryGetValue(name, out var cache);
 
             if (cache != null)
-                return (TResult)cache.Invoke(_instance);
+                return (TResult)cache.Invoke(RawInstance);
 
-            var fi = _instance.GetType().GetField(name, flags | BindingFlags.Instance);
+            var fi = RawInstance.GetType().GetField(name, flags | BindingFlags.Instance);
             if (fi == null)
                 throw new InvalidOperationException($"Field {name} is not found in this instance");
 
             members.Add(name, CreateFieldGetAccessor(fi));
-            return (TResult)members[name].Invoke(_instance);
+            return (TResult)members[name].Invoke(RawInstance);
         }
 
         protected void InvokeField<TValue>(string name, BindingFlags flags, TValue value)
@@ -124,16 +129,16 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
 
             if (cache != null)
             {
-                cache.Invoke(_instance, value);
+                cache.Invoke(RawInstance, value);
                 return;
             }
 
-            var fi = _instance.GetType().GetField(name, flags | BindingFlags.Instance);
+            var fi = RawInstance.GetType().GetField(name, flags | BindingFlags.Instance);
             if (fi == null)
                 throw new InvalidOperationException($"Field {name} is not found in this instance");
 
             members.Add(name, CreateFieldSetAccessor<TValue>(fi));
-            members[name].Invoke(_instance, value);
+            members[name].Invoke(RawInstance, value);
         }
 
         protected TResult InvokeProperty<TResult>(string name, BindingFlags flags)
@@ -142,14 +147,52 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             members.TryGetValue(name, out var cache);
 
             if (cache != null)
-                return (TResult)cache.Invoke(_instance);
+                return (TResult)cache.Invoke(RawInstance);
 
-            var fi = _instance.GetType().GetProperty(name, flags | BindingFlags.Instance);
+            var fi = RawInstance.GetType().GetProperty(name, flags | BindingFlags.Instance);
             if (fi == null)
                 throw new InvalidOperationException($"Property {name} is not found in this instance");
 
-            members.Add(name, CreatePropertyAccessor(fi));
-            return (TResult)members[name].Invoke(_instance);
+            members.Add(name, CreatePropertyGetAccessor(fi));
+            return (TResult)members[name].Invoke(RawInstance);
+        }
+
+        protected void InvokeProperty<TValue>(string name, BindingFlags flags, TValue value)
+        {
+            var members = ((Cache)Caches[_type]).MemberSetters;
+            members.TryGetValue(name, out var cache);
+
+            if (cache != null)
+            {
+                cache.Invoke(RawInstance, value);
+                return;
+            }
+
+            var fi = RawInstance.GetType().GetProperty(name, flags | BindingFlags.Instance);
+            if (fi == null)
+                throw new InvalidOperationException($"Property {name} is not found in this instance");
+
+            members.Add(name, CreatePropertySetAccessor(typeof(TValue), fi));
+            members[name].Invoke(RawInstance, value);
+        }
+
+        protected void InvokeProperty(string name, BindingFlags flags, Type t, object value)
+        {
+            var members = ((Cache)Caches[_type]).MemberSetters;
+            members.TryGetValue(name, out var cache);
+
+            if (cache != null)
+            {
+                cache.Invoke(RawInstance, value);
+                return;
+            }
+
+            var fi = RawInstance.GetType().GetProperty(name, flags | BindingFlags.Instance);
+            if (fi == null)
+                throw new InvalidOperationException($"Property {name} is not found in this instance");
+
+            members.Add(name, CreatePropertySetAccessor(t, fi));
+            members[name].Invoke(RawInstance, value);
         }
 
         private Func<object, object[], object> CreateMethodAccessor(MethodInfo mi)
@@ -191,12 +234,38 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty.Reflection.Expressions
             return Expression.Lambda<Action<object, object>>(Expression.Convert(body, typeof(object)), instance, value).Compile();
         }
 
-        private Func<object, object> CreatePropertyAccessor(PropertyInfo pi)
+        private Func<object, object> CreatePropertyGetAccessor(PropertyInfo pi)
         {
             var instance = Expression.Parameter(typeof(object), "instance");
             var body = Expression.Property(Expression.Convert(instance, _type), pi);
 
             return Expression.Lambda<Func<object, object>>(Expression.Convert(body, typeof(object)), instance).Compile();
+        }
+
+        private Action<object, object> CreatePropertySetAccessor(Type t, PropertyInfo pi)
+        {
+            var instance = Expression.Parameter(typeof(object), "instance");
+
+            if (t.IsArray)
+            {
+                var value = Expression.Parameter(typeof(object), "value");
+                var e = t.GetElementType() ?? throw new InvalidOperationException();
+                var w = Expression.Parameter(typeof(object), "w");
+                var m = typeof(Array).GetMethods().First(v => v.Name == "ConvertAll").MakeGenericMethod(typeof(object), e);
+                var c = typeof(Converter<,>).MakeGenericType(typeof(object), e);
+
+                // ReSharper disable once AssignNullToNotNullAttribute
+                var converter = Expression.Lambda(c, Expression.Convert(w, e), w); // (w) => (SomeType) w;
+                var calling = Expression.Call(m, Expression.Convert(value, typeof(object[])), converter);
+                var body = Expression.Assign(Expression.Property(Expression.Convert(instance, _type), pi), calling);
+                return Expression.Lambda<Action<object, object>>(Expression.Convert(body, typeof(object)), instance, value).Compile();
+            }
+            else
+            {
+                var value = Expression.Parameter(typeof(object), "value");
+                var body = Expression.Assign(Expression.Property(Expression.Convert(instance, _type), pi), Expression.Convert(value, t));
+                return Expression.Lambda<Action<object, object>>(Expression.Convert(body, typeof(object)), instance, value).Compile();
+            }
         }
 
         private class Cache

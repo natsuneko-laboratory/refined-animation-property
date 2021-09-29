@@ -19,6 +19,7 @@ namespace NatsunekoLaboratory.RefinedAnimationProperty
         {
             new SearchableAddPropertyPopup(),
             new SupportToEasingFunctionsInCurveEditor(),
+            new FixAnimationCurveIdGeneration()
         };
 
         [InitializeOnLoadMethod]

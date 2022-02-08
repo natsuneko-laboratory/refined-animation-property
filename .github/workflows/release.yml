@@ -100,4 +100,4 @@ jobs:
           AWS_DEFAULT_REGION: ap-northeast-1
           AWS_REGION: ap-northeast-1
         run: |
-          aws s3 cp ./dist/* s3://assets.natsuneko.moe/r/e/RefinedAnimationProperty/ --endpoint-url=https://s3.ap-northeast-1.wasabisys.com
+          aws s3 cp ./dist/ s3://assets.natsuneko.moe/r/e/RefinedAnimationProperty/ --endpoint-url=https://s3.ap-northeast-1.wasabisys.com

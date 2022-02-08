@@ -22,37 +22,7 @@ In this case, please remove the included Harmony.dll and replace the reference i
 
 ## Installation
 
-1. Download UnityPackage from GitHub Releases
-2. Install via NPM Scoped Registry
-3. Clone GitHub Repository and Copy Scripts
-
-### Download UnityPackage
-
-You can download latest version of UnityPackage from GitHub Releases (Not Yet Provided).
-Extract downloaded zip package and install UnityPackage into your project.
-
-### Install via NPM
-
-Please add the following section to the top of the package manifest file (`Packages/manifest.json`).
-If the package manifest file already has a `scopedRegistries` section, it will be added there.
-
-```json
-{
-  "scopedRegistries": [
-    {
-      "name": "Natsuneko Laboratory",
-      "url": "https://registry.npmjs.com",
-      "scopes": ["moe.natsuneko"]
-    }
-  ]
-}
-```
-
-And the following line to the `dependencies` section:
-
-```json
-"moe.natsuneko.refined-animation-property": "VERSION"
-```
+Download UnityPackage from [Natsuneko Laboratory](https://natsuneko.moe)
 
 ## How to use
 

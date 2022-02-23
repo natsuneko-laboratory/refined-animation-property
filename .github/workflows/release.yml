@@ -100,5 +100,5 @@ jobs:
           AWS_DEFAULT_REGION: ap-northeast-1
           AWS_REGION: ap-northeast-1
         run: |
-          aws s3 cp ./dist/RefinedAnimationProperty/ s3://assets.natsuneko.moe/r/e/RefinedAnimationProperty/ --recursive --endpoint-url=https://s3.ap-northeast-1.wasabisys.com
-          aws s3 cp ./dist/RefinedAnimationProperty-VRChat/ s3://assets.natsuneko.moe/r/e/RefinedAnimationProperty/ --recursive --endpoint-url=https://s3.ap-northeast-1.wasabisys.com
+          aws s3 cp ./dist/RefinedAnimationProperty/ s3://archive.natsuneko.moe/r/e/RefinedAnimationProperty/ --recursive --endpoint-url=https://s3.ap-northeast-1.wasabisys.com
+          aws s3 cp ./dist/RefinedAnimationProperty-VRChat/ s3://archive.natsuneko.moe/r/e/RefinedAnimationProperty/ --recursive --endpoint-url=https://s3.ap-northeast-1.wasabisys.com

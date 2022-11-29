@@ -1,0 +1,23 @@
+{
+  "name": "cat.natsuneko.refined-animation-property",
+  "version": "0.3.0",
+  "description": "Unity Editor extensions for refine animation related features",
+  "displayName": "Refined Animation Property",
+  "unity": "2019.4",
+  "dependencies": {},
+  "vpmDependencies": {},
+  "legacyFolders": {
+    "Assets\\NatsunekoLaboratory\\RefinedAnimationProperty": "3aaa13c12509c964ca2906940d76ffa4"
+  },
+  "license": "MIT",
+  "keywords": [
+    "Unity",
+    "Animation",
+    "Animator"
+  ],
+  "author": {
+    "name": "Natsuneko",
+    "email": "me@natsuneko.cat",
+    "url": "https://natsuneko.cat"
+  }
+}

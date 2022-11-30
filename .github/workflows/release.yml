@@ -17,7 +17,7 @@ jobs:
           VERSION=$(echo ${{ github.ref }} | sed -e 's/refs\/tags\///' | sed -e 's/refs\/heads\///')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-  build-normal:
+  build:
     runs-on: ubuntu-latest
     needs: [setup]
     steps:
@@ -37,36 +37,6 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: RefinedAnimationProperty
-          path: dist/
-
-  build-vrchat:
-    runs-on: ubuntu-latest
-    needs: [setup]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          lfs: true
-
-      - name: configure
-        run: |
-          mkdir ./dist
-
-      - uses: natsuneko-laboratory/get-meta-from-glob@main
-        with:
-          includes: |
-            Assets/NatsunekoLaboratory/RefinedAnimationProperty/**/*.*
-          excludes: |
-            Assets/NatsunekoLaboratory/RefinedAnimationProperty/**/*.dll
-          output: ./MetaList
-
-      - uses: natsuneko-laboratory/create-unitypackage@v2.0.0
-        with:
-          meta: ./MetaList
-          output: dist/RefinedAnimationProperty-VRChat-${{ needs.setup.outputs.version }}.unitypackage
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: RefinedAnimationProperty-VRChat
           path: dist/
 
   # upload-artifacts:
